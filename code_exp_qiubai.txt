@@ -20,3 +20,24 @@ parse_qsl() 的作用就是把 URL 的 Query Parameters 变成 (key, value) 组�
 特征在query里，比如页码什么的一旦开始叠加，就会标记为可疑的url（在这我设置了一个阈值50，只有超过50次的url family才会被标记为可疑的
 url family）在这不会决定是否爬取，在下一个模块才会决定。
 
+is_low_information，这个很好理解，里面的东西是不是太少了，太少信息的网页不值得爬取，这里没有主观意义上的太少，就是单纯的，词少这样
+比如说网页没有正文，网页的单词数量太少，还有单词不同度是否低于于20%，如果太低就说明重复程度太高了，就也不会爬取。当然，这个是网页本身
+内容的检测，比如一个网页里全是aaaaaaaaaaaaaaaaaaaaa b c这样一类的，那就会标记为网页重复度高，和下面那个不一样哈
+
+content_similarity这个是网页和网页相比的重复度，比如a网页全是aaa，b网页也全是aaa，那就是重复度太高，这个就会检测出来标记为可疑
+
+ContentHistory 这个类似于上面的URLHistory，只不过这里看的是网页的内容是否不同，而不是单纯从网页的链接里去看重复程度。这里的阈值是
+0.9。
+
+这里可能会感觉ContentHistory和URLHistory的功能有所重复？但是其实不是的，就像is_low_information和content_similarity这两个function
+的对比，contenthis和urlhis的区别就在于前者是检测网页内容重复从而把url标记为url family，后者是通过检测url链接把url标记为url family
+两者相结合才能最终决定哪些可疑的url不会被爬取。
+
+is_dead_page很简单，如果是不是200，就标记为可疑网页（非200的往往都是无法访问或者有问题的网页），当然也不会单纯就靠200去检测一个网页是否
+靠谱，更多的也会去看网页是否有内容，所谓空网页这样。
+
+is_large_file也很简单，是不是太大了，5*1024*1024就是5mb的文件大小，作为一个网页5mb的大小确实有点忒大了。当然如果没有size（空网页）
+也会标记为可疑网页这样。
+
+TrapDetector，统合的class，所谓两者相结合才能最终决定哪些可疑的url不会被爬取。
+
