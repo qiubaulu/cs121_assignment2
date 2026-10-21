@@ -108,3 +108,6 @@ venv.bak/
 
 *.full.py
 *.shelve
+# Generated Part C statistics and report snapshots.
+*.analytics.sqlite3*
+*.report.txt

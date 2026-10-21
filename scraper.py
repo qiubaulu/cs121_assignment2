@@ -1,7 +1,10 @@
 import re
 from urllib.parse import urlparse
+from analytics import record_response
 
 def scraper(url, resp):
+    # Count distinct page URLs before link extraction or similarity filtering.
+    record_response(url, resp)
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
