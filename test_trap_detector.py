@@ -8,7 +8,8 @@ from trap_detector import (
     content_similarity,
     ContentHistory,
     is_dead_page,
-    is_large_file
+    is_large_file,
+    TrapDetector
 )
 
 
@@ -403,6 +404,66 @@ class TestTrapDetector(unittest.TestCase):
         size = 5 * 1024 * 1024
         self.assertFalse(is_large_file(size, "application/pdf"))
 
+
+
+    # --------------------------------------------------
+    # 10. TrapDetector
+    # Tests final crawling and link expansion decisions
+    # --------------------------------------------------
+
+    def test_should_crawl_normal_url(self):
+        detector = TrapDetector()
+        url = "https://www.ics.uci.edu/about"
+
+        self.assertTrue(detector.should_crawl(url))
+
+    def test_should_crawl_trap(self):
+        detector = TrapDetector()
+        url = "https://www.ics.uci.edu/a/b/a/b/a/b"
+
+        self.assertFalse(detector.should_crawl(url))
+
+    def test_should_expand_normal_page(self):
+        detector = TrapDetector()
+        url = "https://www.ics.uci.edu/page?id=1"
+        text = " ".join(f"word{i}" for i in range(50))
+
+        self.assertTrue(
+            detector.should_expand(url, 200, text.encode(), text)
+        )
+
+    def test_should_expand_dead_page(self):
+        detector = TrapDetector()
+        url = "https://www.ics.uci.edu/empty"
+
+        self.assertFalse(
+            detector.should_expand(url, 200, b"", "")
+        )
+
+    def test_should_expand_large_file(self):
+        detector = TrapDetector()
+        url = "https://www.ics.uci.edu/archive.zip"
+        content = b"x" * (6 * 1024 * 1024)
+
+        self.assertFalse(
+            detector.should_expand(
+                url, 200, content, "file content",
+                "application/zip"
+            )
+        )
+
+    def test_should_expand_repetitive_family(self):
+        detector = TrapDetector()
+        detector.url_history.threshold = 3
+
+        for page in range(1, 5):
+            url = f"https://www.ics.uci.edu/calendar?page={page}"
+            detector.should_crawl(url)
+            result = detector.should_expand(
+                url, 200, b"No results found", "No results found"
+            )
+
+        self.assertFalse(result)
 
 if __name__ == "__main__":
     unittest.main()

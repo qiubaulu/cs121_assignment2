@@ -162,6 +162,7 @@ def is_large_file(content_size, content_type="", max_size=5 * 1024 * 1024):
 
     return True
 
+
 class TrapDetector:
 
     def __init__(self):
@@ -169,8 +170,31 @@ class TrapDetector:
         self.content_history = ContentHistory()
 
     def should_crawl(self, url):
-        pass
+        if is_trap(url):
+            return False
 
-    def should_expand(self, url, status, content, text):
-        pass
+        self.url_history.is_suspicious(url)
+        return True
+
+    def should_expand(self, url, status, content, text,
+                      content_type="text/html"):
+        if status != 200:
+            return False
+
+        if is_dead_page(status, content, text):
+            return False
+
+        if is_large_file(len(content), content_type):
+            return False
+
+        suspicious = self.url_history.is_suspicious(url)
+        similar = self.content_history.is_similar(url, text)
+        repetitive = self.content_history.is_repetitive_family(url)
+        low_info = is_low_information(text)
+
+        if suspicious and similar and repetitive and low_info:
+            return False
+
+        return True
+
 
