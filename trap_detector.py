@@ -162,18 +162,6 @@ def is_large_file(content_size, content_type="", max_size=5 * 1024 * 1024):
 
     return True
 
-class TrapDetector:
-
-    def __init__(self):
-        self.url_history = URLHistory()
-        self.content_history = ContentHistory()
-
-    def should_crawl(self, url):
-        pass
-
-    def should_expand(self, url, status, content, text):
-        pass
-
 
 class TrapDetector:
 
